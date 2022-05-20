@@ -25,7 +25,7 @@ public:
                     std::cout << decryption(message) << std::endl;
                 }
             } else if (command == "update") {
-                client_.Update();\
+                client_.Update();
             }
         }
     }
