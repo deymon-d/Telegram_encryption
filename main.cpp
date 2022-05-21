@@ -2,6 +2,7 @@
 #include "symmetry_encryption.h"
 #include <iostream>
 
+
 class Manager {
 public:
     void loop() {

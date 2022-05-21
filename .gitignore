@@ -1,4 +1,5 @@
 .idea
-tdlib
+td
 ans*
 cmake-build-debug
+cryptopp
