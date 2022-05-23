@@ -1,5 +1,4 @@
-#pragma once
-#include "symmetry_encryption.h"
+#include "encryption.h"
 
 std::string encryption(const std::string& text) {
     std::string copy = text;

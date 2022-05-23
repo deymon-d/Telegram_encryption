@@ -1,5 +1,8 @@
 #include "client.h"
-#include "symmetry_encryption.h"
+#include "encryption.h"
+#include "cryptopp/rsa.h"
+#include "cryptopp/osrng.h"
+
 #include <iostream>
 #include <functional>
 #include <map>
@@ -39,7 +42,6 @@ private:
         std::string name, text;
         std::cin >> name >> text;
         text = encryption(text);
-        std::cout << name << ' ' << text << std::endl;
         client_.SendMessage(name, text);
     }
 
@@ -48,7 +50,7 @@ private:
         size_t count;
         std::cin >> name >> count;
         for (auto& message : client_.GetMessages(name, count)) {
-            std::cout << decryption(message) << std::endl;
+            std::cout << message.author << ": " << decryption(message.content) << std::endl;
         }
     }
 

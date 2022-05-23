@@ -2,8 +2,7 @@
 
 #include <td/telegram/td_api.h>
 #include <iostream>
-#include <thread>
-#include <chrono>
+
 // overloaded
 namespace detail {
     template <class... Fs>
@@ -64,21 +63,25 @@ void Client::SendMessage(const std::string &name, const std::string& message) {
     GetChanges();
 }
 
-std::vector<std::string> Client::GetMessages(const std::string &name, size_t count) {
+std::vector<Message> Client::GetMessages(const std::string &name, size_t count) {
     auto chat_id =  chats_.find(name);
     if (chat_id == chats_.end()) {
         return {};
     }
-    std::vector<td_api::string> tmp;
+    std::vector<Message> tmp;
     auto get_history = td_api::make_object<td_api::getChatHistory>(chat_id->second, 0, 0, count, false);
     SendQuery(std::move(get_history), [this, &tmp](Object object) {
         auto messages = td::move_tl_object_as<td_api::messages>(object);
         for (auto& message : messages->messages_) {
             auto text = td::move_tl_object_as<td_api::messageText>(message->content_);
-            tmp.emplace_back(text->text_->text_);
+            auto it = chat_ids_.find(message->chat_id_);
+            std::string author = "unknown user";
+            if (it != chat_ids_.end()) {
+                author = it->second;
+            }
+            tmp.emplace_back(author, text->text_->text_);
         }
     });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
     GetChanges();
     return tmp;
 }
@@ -95,15 +98,7 @@ void Client::GetChanges() {
 }
 
 void Client::Update() {
-    SendQuery(td_api::make_object<td_api::getChats>(nullptr, 20), [this](Object object) {
-        if (object->get_id() == td_api::error::ID) {
-            return;
-        }
-        auto chats = td::move_tl_object_as<td_api::chats>(object);
-        for (auto chat_id : chats->chat_ids_) {
-            std::cout << "[chat_id:" << chat_id << "] [title:" << chat_id << "]" << std::endl;
-        }});
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    SendQuery(td_api::make_object<td_api::getChats>(nullptr, 20), {});
     GetChanges();
 }
 
@@ -131,9 +126,11 @@ void Client::ProcessResponse(td::ClientManager::Response response) {
                 },
                 [this](td_api::updateNewChat &update_new_chat) {
                     chats_[update_new_chat.chat_->title_] = update_new_chat.chat_->id_;
+                    chat_ids_[update_new_chat.chat_->id_] = update_new_chat.chat_->title_;
                 },
                 [this](td_api::updateChatTitle &update_chat_title) {
                     chats_[update_chat_title.title_] = update_chat_title.chat_id_;
+                    chat_ids_[update_chat_title.chat_id_] = update_chat_title.title_;
                 },
                 [this](auto &update) {}
                 ));
