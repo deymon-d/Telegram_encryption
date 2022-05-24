@@ -1,7 +1,5 @@
 #include "client.h"
 #include "encryption.h"
-#include "cryptopp/rsa.h"
-#include "cryptopp/osrng.h"
 
 #include <iostream>
 #include <functional>
